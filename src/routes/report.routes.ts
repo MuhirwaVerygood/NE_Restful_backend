@@ -3,11 +3,13 @@ import {
   getOutgoingCarsByDateRange, 
   getIncomingCarsByDateRange, 
   getParkingOccupancyReport,
-  getRevenueReport
+  getRevenueReport,
+  generateEntriesReport
 } from '../controllers/report.controller';
 import { authenticate, authorizeAdmin } from '../middlewares/auth.middleware';
 import { query } from 'express-validator';
 import { validateRequest } from '../middlewares/validation.middleware';
+import { body, param } from 'express-validator';
 
 const router = express.Router();
 
@@ -186,5 +188,85 @@ router.get(
   ],
   getRevenueReport
 );
+
+
+
+/**
+ * @swagger
+ * /api/reports/entries:
+ *   get:
+ *     summary: Generate entries report
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2025-05-13"
+ *         description: Start date of the report period
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2025-05-20"
+ *         description: End date of the report period
+ *     responses:
+ *       200:
+ *         description: Entries report generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       plateNumber:
+ *                         type: string
+ *                       parkingName:
+ *                         type: string
+ *                       entryDateTime:
+ *                         type: string
+ *                         format: date-time
+ *                       exitDateTime:
+ *                         type: string
+ *                         format: date-time
+ *                         nullable: true
+ *                       chargedAmount:
+ *                         type: number
+ *                         nullable: true
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid date range or missing start/end date
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  '/entries',
+  [
+    authenticate,
+    authorizeAdmin,
+    query('startDate').notEmpty().isDate().withMessage('Valid start date is required'),
+    query('endDate').notEmpty().isDate().withMessage('Valid end date is required'),
+    validateRequest
+  ],
+  generateEntriesReport
+);
+
 
 export default router;

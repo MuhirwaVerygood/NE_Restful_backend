@@ -3,6 +3,7 @@ import { getAllUsers, getUserById, updateUser, changePassword, deleteUser } from
 import { authenticate, authorizeAdmin } from '../middlewares/auth.middleware';
 import { body, param } from 'express-validator';
 import { validateRequest } from '../middlewares/validation.middleware';
+import { generateEntriesReport } from '../controllers/report.controller';
 
 const router = express.Router();
 

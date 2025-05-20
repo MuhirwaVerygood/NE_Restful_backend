@@ -237,4 +237,53 @@ export const getRevenueReport = async (req: Request, res: Response): Promise<Res
     console.error('Get revenue report error:', error);
     return ServerResponse.error(res, 'Failed to generate revenue report');
   }
+
+
+
+
+  
+};
+
+
+export const generateEntriesReport = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return ServerResponse.error(res, 'Start date and end date are required', 400);
+    }
+
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+      return ServerResponse.error(res, 'Invalid date range', 400);
+    }
+
+    const entries = await prisma.entry.findMany({
+      where: {
+        entryDateTime: {
+          gte: start,
+          lte: end,
+        },
+      },
+      include: {
+        parking: true,
+      },
+    });
+
+    const report = entries.map(entry => ({
+      id: entry.id,
+      plateNumber: entry.plateNumber,
+      parkingName: entry.parking.name,
+      entryDateTime: entry.entryDateTime,
+      exitDateTime: entry.exitDateTime,
+      chargedAmount: entry.chargedAmount,
+    }));
+
+    return ServerResponse.success(res, report, 'Entries report generated successfully');
+  } catch (error) {
+    console.error('Generate entries report error:', error);
+    return ServerResponse.error(res, 'Failed to generate entries report', 500);
+  }
 };
