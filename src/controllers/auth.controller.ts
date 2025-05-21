@@ -77,6 +77,7 @@ export const login = async (req: Request, res: Response): Promise<Response> => {
       return ServerResponse.unauthorized(res, 'Invalid email or password');
     }
 
+    // Generate JWT token
 
           const token = jwt.sign({ id: user.id, role: user.role , email: user.email }, process.env.JWT_SECRET as string, { expiresIn: '1d' });
 

@@ -4,7 +4,8 @@ import {
   getIncomingCarsByDateRange, 
   getParkingOccupancyReport,
   getRevenueReport,
-  generateEntriesReport
+  generateEntriesReport,
+  generateExitsReport
 } from '../controllers/report.controller';
 import { authenticate, authorizeAdmin } from '../middlewares/auth.middleware';
 import { query } from 'express-validator';
@@ -266,6 +267,86 @@ router.get(
     validateRequest
   ],
   generateEntriesReport
+);
+
+
+/**
+ * @swagger
+ * /api/reports/exits:
+ *   get:
+ *     summary: Generate vehicle exits report with revenue
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: startDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2025-05-13"
+ *         description: Start date of the report period
+ *       - in: query
+ *         name: endDate
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: date
+ *         example: "2025-05-20"
+ *         description: End date of the report period
+ *     responses:
+ *       200:
+ *         description: Exits report generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                       plateNumber:
+ *                         type: string
+ *                       parkingName:
+ *                         type: string
+ *                       entryDateTime:
+ *                         type: string
+ *                         format: date-time
+ *                       exitDateTime:
+ *                         type: string
+ *                         format: date-time
+ *                       chargedAmount:
+ *                         type: number
+ *                         nullable: true
+ *                 totalRevenue:
+ *                   type: number
+ *                   description: Total revenue from exits in the period
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid date range or missing start/end date
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not authorized
+ *       500:
+ *         description: Server error
+ */
+router.get(
+  '/exits',
+  [
+    authenticate,
+    authorizeAdmin,
+    query('startDate').notEmpty().isDate().withMessage('Valid start date is required'),
+    query('endDate').notEmpty().isDate().withMessage('Valid end date is required'),
+    validateRequest,
+  ],
+  generateExitsReport
 );
 
 

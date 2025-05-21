@@ -287,3 +287,52 @@ export const generateEntriesReport = async (req: Request, res: Response): Promis
     return ServerResponse.error(res, 'Failed to generate entries report', 500);
   }
 };
+
+
+export const generateExitsReport = async (req: Request, res: Response): Promise<Response> => {
+  try {
+    const { startDate, endDate } = req.query;
+
+    if (!startDate || !endDate) {
+      return ServerResponse.error(res, 'Start date and end date are required', 400);
+    }
+
+    const start = new Date(startDate as string);
+    const end = new Date(endDate as string);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+      return ServerResponse.error(res, 'Invalid date range', 400);
+    }
+
+    const entries = await prisma.entry.findMany({
+      where: {
+        exitDateTime: {
+          gte: start,
+          lte: end,
+          not: null,
+        },
+      },
+      include: {
+        parking: true,
+      },
+    });
+
+    const report = entries.map(entry => ({
+      id: entry.id,
+      plateNumber: entry.plateNumber,
+      parkingName: entry.parking.name,
+      entryDateTime: entry.entryDateTime,
+      exitDateTime: entry.exitDateTime,
+      chargedAmount: entry.chargedAmount ? entry.chargedAmount.toNumber() : null,
+    }));
+
+    const totalRevenue = entries
+      .filter(entry => entry.chargedAmount !== null)
+      .reduce((sum, entry) => sum + entry.chargedAmount!.toNumber(), 0);
+
+    return ServerResponse.success(res, { data: report, totalRevenue }, 'Exits report generated successfully');
+  } catch (error) {
+    console.error('Generate exits report error:', error);
+    return ServerResponse.error(res, 'Failed to generate exits report', 500);
+  }
+};

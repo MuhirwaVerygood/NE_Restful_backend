@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import ServerResponse from '../utils/response';
 import { sendEmail } from '../utils/email';
-
 const prisma = new PrismaClient();
 
 export const registerEntry = async (req: Request, res: Response): Promise<Response> => {
